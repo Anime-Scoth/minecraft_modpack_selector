@@ -1,7 +1,7 @@
 import os
 import shutil
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QFileDialog, QTextBrowser, QMessageBox
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QPushButton, QFileDialog, QTextBrowser, QMessageBox
 from PyQt5 import QtCore
 
 class ModSelectorApp(QWidget):
@@ -20,14 +20,21 @@ class ModSelectorApp(QWidget):
         self.input_folder_path = "modpacks"
         self.output_folder_path = "mods"
         
-        # Check if input and output folders exist
+        # Create input folder if it doesn't exist
         if not os.path.exists(self.input_folder_path) or not os.path.isdir(self.input_folder_path):
-            self.show_error("The specified input folder path does not exist or is not a directory.")
-            return
+            os.makedirs(self.input_folder_path)
         
-        if not os.path.exists(self.output_folder_path) or not os.path.isdir(self.output_folder_path):
-            self.show_error("The specified output folder path does not exist or is not a directory.")
-            return
+        # Check if output folder exists and create modpack01 subfolder with files
+        if os.path.exists(self.output_folder_path) and os.path.isdir(self.output_folder_path):
+            self.modpack01_folder_path = os.path.join(self.input_folder_path, "modpack01")
+            if not os.path.exists(self.modpack01_folder_path):
+                os.makedirs(self.modpack01_folder_path)
+                with open(os.path.join(self.modpack01_folder_path, "mod1.jar"), "w") as mod1_file:
+                    pass
+                with open(os.path.join(self.modpack01_folder_path, "mod2.jar"), "w") as mod2_file:
+                    pass
+                with open(os.path.join(self.modpack01_folder_path, "op.txt"), "w") as op_file:
+                    op_file.write("This is a test modpack")
         
         # List of folders in the input folder
         self.folders = self.list_folders(self.input_folder_path)
@@ -68,12 +75,10 @@ class ModSelectorApp(QWidget):
 
         self.setLayout(layout)
 
-    # Function to list folders in a directory
     def list_folders(self, path):
         folders = [folder for folder in os.listdir(path) if os.path.isdir(os.path.join(path, folder))]
         return folders
 
-    # Function triggered when a folder is selected
     def folder_selected(self, selected_folder):
         self.text_browser.clear()
         self.selected_folder = selected_folder
@@ -87,7 +92,6 @@ class ModSelectorApp(QWidget):
         else:
             self.text_browser.setPlainText("No description available. You can add one through the op.txt file in your custom build folder")
 
-    # Function to choose the output folder
     def choose_output_folder(self):
         options = QFileDialog.Options()
         options |= QFileDialog.ShowDirsOnly
@@ -96,17 +100,14 @@ class ModSelectorApp(QWidget):
         if selected_folder:
             self.selected_output_folder = selected_folder
 
-    # Function for final selection and copying files
     def final_selection(self):
         if self.selected_folder and self.selected_output_folder:
             selected_folder_path = os.path.join(self.input_folder_path, self.selected_folder)
 
-            # Delete existing files in the output folder
             for root, _, files in os.walk(self.selected_output_folder):
                 for file in files:
                     os.remove(os.path.join(root, file))
             
-            # Copy files from the selected folder to the output folder
             for root, _, files in os.walk(selected_folder_path):
                 for file in files:
                     src_path = os.path.join(selected_folder_path, file)
@@ -117,12 +118,10 @@ class ModSelectorApp(QWidget):
         else:
             self.show_info("Select both an input folder and an output folder before performing the final selection.")
 
-    # Function to show error message
     def show_error(self, message):
         QMessageBox.critical(self, "Error", message)
         sys.exit()
 
-    # Function to show information message
     def show_info(self, message):
         QMessageBox.information(self, "Information", message)
 
